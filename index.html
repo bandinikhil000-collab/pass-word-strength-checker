@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Password Strength Checker</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --card-bg: rgba(30, 41, 59, 0.7);
+      --border: rgba(255, 255, 255, 0.1);
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --danger: #ef4444;
+      --warning: #f59e0b;
+      --info: #3b82f6;
+      --success: #10b981;
+      --purple: #8b5cf6;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    }
+
+    body {
+      background: radial-gradient(circle at top, #1e1b4b 0%, #0f172a 100%);
+      color: var(--text-main);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 520px;
+      background: var(--card-bg);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 32px;
+      box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.5);
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 28px;
+    }
+
+    .header .icon {
+      font-size: 40px;
+      margin-bottom: 8px;
+      display: inline-block;
+    }
+
+    .header h1 {
+      font-size: 24px;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+      margin-bottom: 6px;
+    }
+
+    .header p {
+      color: var(--text-muted);
+      font-size: 14px;
+    }
+
+    .input-group {
+      position: relative;
+      margin-bottom: 20px;
+    }
+
+    .input-wrapper {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+
+    input[type="password"],
+    input[type="text"] {
+      width: 100%;
+      padding: 14px 48px 14px 16px;
+      background: rgba(15, 23, 42, 0.6);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      color: var(--text-main);
+      font-size: 16px;
+      outline: none;
+      transition: all 0.2s ease;
+    }
+
+    input:focus {
+      border-color: #6366f1;
+      box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.25);
+    }
+
+    .toggle-visibility {
+      position: absolute;
+      right: 12px;
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      font-size: 18px;
+      padding: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 6px;
+      transition: color 0.2s;
+    }
+
+    .toggle-visibility:hover {
+      color: var(--text-main);
+    }
+
+    /* Meter & Status */
+    .meter-container {
+      margin-bottom: 24px;
+    }
+
+    .meter-label-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+      font-size: 13px;
+    }
+
+    .meter-badge {
+      font-weight: 600;
+      padding: 3px 10px;
+      border-radius: 999px;
+      text-transform: uppercase;
+      font-size: 11px;
+      letter-spacing: 0.5px;
+      background: rgba(255, 255, 255, 0.05);
+      color: var(--text-muted);
+      transition: all 0.3s ease;
+    }
+
+    .meter-track {
+      width: 100%;
+      height: 8px;
+      background: rgba(255, 255, 255, 0.08);
+      border-radius: 999px;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .meter-fill {
+      height: 100%;
+      width: 0%;
+      background: var(--danger);
+      border-radius: 999px;
+      transition: width 0.3s ease, background-color 0.3s ease;
+    }
+
+    /* Checklist */
+    .checklist {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-bottom: 24px;
+      background: rgba(15, 23, 42, 0.4);
+      padding: 16px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+    }
+
+    .checklist-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 13px;
+      color: var(--text-muted);
+      transition: color 0.2s ease;
+    }
+
+    .checklist-item.passed {
+      color: #e2e8f0;
+    }
+
+    .status-icon {
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 10px;
+      font-weight: bold;
+      background: rgba(255, 255, 255, 0.06);
+      color: var(--text-muted);
+      transition: all 0.2s ease;
+    }
+
+    .checklist-item.passed .status-icon {
+      background: rgba(16, 185, 129, 0.2);
+      color: var(--success);
+    }
+
+    /* Recommendations */
+    .tips-box {
+      font-size: 13px;
+      line-height: 1.5;
+      padding: 14px 16px;
+      border-radius: 10px;
+      background: rgba(99, 102, 241, 0.08);
+      border: 1px solid rgba(99, 102, 241, 0.2);
+      color: #cbd5e1;
+    }
+
+    .tips-title {
+      font-weight: 600;
+      margin-bottom: 6px;
+      color: #e0e7ff;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .tips-list {
+      padding-left: 18px;
+      margin: 0;
+    }
+
+    .tips-list li {
+      margin-bottom: 4px;
+    }
+
+    .footer-note {
+      margin-top: 20px;
+      text-align: center;
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+  </style>
+</head>
+<body>
+
+  <main class="container">
+    <div class="header">
+      <div class="icon">🛡️</div>
+      <h1>Password Strength Checker</h1>
+      <p>Evaluate your password with zero storage or transmission.</p>
+    </div>
+
+    <!-- Password Input -->
+    <div class="input-group">
+      <div class="input-wrapper">
+        <input 
+          id="passwordInput" 
+          type="password" 
+          placeholder="Enter a password to test..." 
+          autocomplete="off" 
+          spellcheck="false"
+        />
+        <button id="togglePasswordBtn" class="toggle-visibility" type="button" aria-label="Toggle password visibility">
+          👁️
+        </button>
+      </div>
+    </div>
+
+    <!-- Strength Meter -->
+    <div class="meter-container">
+      <div class="meter-label-row">
+        <span>Password Strength:</span>
+        <span id="strengthBadge" class="meter-badge">None</span>
+      </div>
+      <div class="meter-track">
+        <div id="meterFill" class="meter-fill"></div>
+      </div>
+    </div>
+
+    <!-- Security Criteria Checklist -->
+    <ul class="checklist">
+      <li id="reqLength" class="checklist-item">
+        <span class="status-icon">✕</span> Minimum 8 characters
+      </li>
+      <li id="reqUpper" class="checklist-item">
+        <span class="status-icon">✕</span> At least one uppercase letter (A-Z)
+      </li>
+      <li id="reqLower" class="checklist-item">
+        <span class="status-icon">✕</span> At least one lowercase letter (a-z)
+      </li>
+      <li id="reqNumber" class="checklist-item">
+        <span class="status-icon">✕</span> At least one number (0-9)
+      </li>
+      <li id="reqSpecial" class="checklist-item">
+        <span class="status-icon">✕</span> At least one special character (!@#$%...)
+      </li>
+    </ul>
+
+    <!-- Feedback & Tips -->
+    <div id="tipsBox" class="tips-box">
+      <div class="tips-title">💡 Missing Requirements:</div>
+      <ul id="tipsList" class="tips-list">
+        <li>Enter a password above to begin analysis.</li>
+      </ul>
+    </div>
+
+    <div class="footer-note">
+      🔒 Safe & Private: Computed entirely client-side. Never saved or sent.
+    </div>
+  </main>
+
+  <script>
+    const passwordInput = document.getElementById("passwordInput");
+    const toggleBtn = document.getElementById("togglePasswordBtn");
+    const strengthBadge = document.getElementById("strengthBadge");
+    const meterFill = document.getElementById("meterFill");
+    const tipsBox = document.getElementById("tipsBox");
+    const tipsList = document.getElementById("tipsList");
+
+    const reqItems = {
+      length: document.getElementById("reqLength"),
+      upper: document.getElementById("reqUpper"),
+      lower: document.getElementById("reqLower"),
+      number: document.getElementById("reqNumber"),
+      special: document.getElementById("reqSpecial")
+    };
+
+    // Toggle password visibility
+    toggleBtn.addEventListener("click", () => {
+      const isPassword = passwordInput.getAttribute("type") === "password";
+      passwordInput.setAttribute("type", isPassword ? "text" : "password");
+      toggleBtn.textContent = isPassword ? "🙈" : "👁️";
+    });
+
+    // Evaluation function matching Python logic
+    function evaluatePassword(pwd) {
+      const hasLength = pwd.length >= 8;
+      const hasUpper = /[A-Z]/.test(pwd);
+      const hasLower = /[a-z]/.test(pwd);
+      const hasNumber = /[0-9]/.test(pwd);
+      const hasSpecial = /[!@#$%^&*()_+\-=\[\]{}|;:,.<>?\/\\~`"']/.test(pwd);
+
+      const checks = {
+        length: hasLength,
+        upper: hasUpper,
+        lower: hasLower,
+        number: hasNumber,
+        special: hasSpecial
+      };
+
+      const score = Object.values(checks).filter(Boolean).length;
+
+      let rating = "None";
+      let color = "#94a3b8";
+
+      if (pwd.length === 0) {
+        rating = "None";
+        color = "#94a3b8";
+      } else if (pwd.length < 8) {
+        // Enforce max 'Weak' rating for passwords with < 8 characters
+        if (score <= 1) {
+          rating = "Very Weak";
+          color = "#ef4444";
+        } else {
+          rating = "Weak";
+          color = "#f97316";
+        }
+      } else {
+        if (score <= 1) {
+          rating = "Very Weak";
+          color = "#ef4444";
+        } else if (score === 2) {
+          rating = "Weak";
+          color = "#f97316";
+        } else if (score === 3) {
+          rating = "Medium";
+          color = "#f59e0b";
+        } else if (score === 4) {
+          rating = "Strong";
+          color = "#3b82f6";
+        } else {
+          rating = "Very Strong";
+          color = "#10b981";
+        }
+      }
+
+      const missingTips = [];
+      if (!hasLength) missingTips.push("At least 8 characters (longer is much safer)");
+      if (!hasUpper) missingTips.push("Add at least one uppercase letter (A-Z)");
+      if (!hasLower) missingTips.push("Add at least one lowercase letter (a-z)");
+      if (!hasNumber) missingTips.push("Add at least one number (0-9)");
+      if (!hasSpecial) missingTips.push("Add at least one special character (!@#$%^&*)");
+
+      return { checks, score, rating, color, missingTips, length: pwd.length };
+    }
+
+    function updateUI() {
+      const val = passwordInput.value;
+      const res = evaluatePassword(val);
+
+      // Update Checklist Icons
+      for (const [key, passed] of Object.entries(res.checks)) {
+        const elem = reqItems[key];
+        const icon = elem.querySelector(".status-icon");
+        if (val.length > 0 && passed) {
+          elem.classList.add("passed");
+          icon.textContent = "✔";
+        } else {
+          elem.classList.remove("passed");
+          icon.textContent = "✕";
+        }
+      }
+
+      // Update Badge and Progress Bar
+      if (val.length === 0) {
+        strengthBadge.textContent = "None";
+        strengthBadge.style.color = "var(--text-muted)";
+        strengthBadge.style.backgroundColor = "rgba(255, 255, 255, 0.05)";
+        meterFill.style.width = "0%";
+      } else {
+        strengthBadge.textContent = res.rating;
+        strengthBadge.style.color = res.color;
+        strengthBadge.style.backgroundColor = `${res.color}22`;
+        const percentage = Math.max(10, (res.score / 5) * 100);
+        meterFill.style.width = `${percentage}%`;
+        meterFill.style.backgroundColor = res.color;
+      }
+
+      // Update Missing Tips
+      tipsList.innerHTML = "";
+      if (val.length === 0) {
+        tipsBox.querySelector(".tips-title").innerHTML = "💡 Status:";
+        const li = document.createElement("li");
+        li.textContent = "Enter a password above to begin analysis.";
+        tipsList.appendChild(li);
+      } else if (res.missingTips.length === 0) {
+        tipsBox.querySelector(".tips-title").innerHTML = "🎉 Excellent Password!";
+        const li = document.createElement("li");
+        li.textContent = "All 5 security criteria satisfied. Your password is very resilient!";
+        tipsList.appendChild(li);
+      } else {
+        tipsBox.querySelector(".tips-title").innerHTML = "💡 Missing Requirements:";
+        res.missingTips.forEach(tip => {
+          const li = document.createElement("li");
+          li.textContent = tip;
+          tipsList.appendChild(li);
+        });
+      }
+    }
+
+    passwordInput.addEventListener("input", updateUI);
+  </script>
+</body>
+</html>
